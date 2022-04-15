@@ -40,7 +40,7 @@ jobs:
           key: npm-packages-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit =! 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: npm install
 
       # lint, tsc, build를 테스트 하는 로직임
