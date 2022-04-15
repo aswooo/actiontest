@@ -18,18 +18,18 @@ jobs:
     steps:
       # 리눅스 환경에서 checkout하고 실행함
       # use 는 만들어져있는 action을 실행할 때, 사용하는 태그임
-      -uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
       # Node.js 환경에서 실행할 것을 명시한다.
-      -name: Use Node.js
-       uses: actions/setup-node@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v2
        # 'with'명령을 통해서 Action에 변수 전달이 가능하다.
        # '${{secrets.변수명}}'
        with:
           # git에서 설정했던 환경변수 ( node 의 버전을 나타냄 )
           node-version: ${{secrets.NODE-VERSION}}
 
-      -name: Cache node modules
+      - name: Cache node modules
        uses: actions.cache@v2
        # 해당 step을 대표하는 id를 설정할 수 있음
        id: cache
@@ -39,13 +39,13 @@ jobs:
       # 키값으로 cache가 돼있는지 확인합니다.
         key: npm-packages-${{ hashFiles('**/package-lock.json') }}
 
-      -name: Install dependencies
+      - name: Install dependencies
         if: steps.cache.outputs.cache-hit =! 'true'
         run: npm install
 
       # lint, tsc, build를 테스트 하는 로직임
       # 'run'은 command 명령어를 입력할 수 있게 해준다.
-      -run: npm run lint
+      - run: npm run lint
         if: ${{ always() }}
       - run: npm run tsc
         if: ${{ always() }}
