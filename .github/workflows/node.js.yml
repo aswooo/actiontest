@@ -1,0 +1,42 @@
+# test-every-push.yml
+
+# workflow의 이름. 나중에 해당 값을 사용할 수 있기 때문에 저는 유니크하게 사용합니다.
+name: 'test-every-push'
+
+# workflow를 동작하게하는 trigger입니다.
+# repository에 push 이벤트가 발생할 때마다 실행될 거예요.
+# push 말고도 여러 가지 이벤트들이 있겠죠?
+on: push
+
+# job은 사용자가 정한 플랫폼을 통해 step이라는 일련의 과정을 실행할 수 있어요.
+# 여러 개의 job을 사용할 수 있으며, 여러 개의 job을 사용할 때는 서로 정보도 교환할 수 있어요.
+# 그리고 각각 독립적으로도 실행할 수도 있어요.
+# 해당 예제는 간단한 workflow이므로 하나의 job만 갖도록 할게요.
+jobs:
+  test:
+    name: Test lint, tsc, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ secrets.NODE_VERSION }}
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: node_modules
+          key: npm-packages-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm install
+      - run: npm run lint
+        if: ${{ always() }}
+      - run: npm run tsc
+        if: ${{ always() }}
+      - run: npm run build
+        if: ${{ always() }}
