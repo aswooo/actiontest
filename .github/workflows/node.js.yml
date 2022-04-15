@@ -45,9 +45,9 @@ jobs:
 
       # lint, tsc, build를 테스트 하는 로직임
       # 'run'은 command 명령어를 입력할 수 있게 해준다.
-      - run: npm run lint
-        if: ${{ always() }}
-      - run: npm run tsc
-        if: ${{ always() }}
+      # - run: npm run lint
+      #   if: ${{ always() }}
+      # - run: npm run tsc
+      #   if: ${{ always() }}
       - run: npm run build
         if: ${{ always() }}
