@@ -43,5 +43,5 @@ jobs:
       run: aws s3 cp --region ap-northeast-2 ./build-fe.zip s3://wooactiontest/build-fe.zip
 
     - name: Code Deploy
-      run: aws deploy create-deployment --application-name testapp --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name test --s3-location bucket=wooactiontest,bundleType=zip,key=build-fe.zip
+      run: aws deploy create-deployment --application-name testapp --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name test --s3-location bucket=wooactiontest,bundleType=zip,key=/build-fe.zip
 
