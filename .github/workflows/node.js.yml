@@ -1,53 +1,49 @@
-# 내가 설정하는 이 workflow의 이름
-name: 'when_push'
+name: Node.js CD
 
-# 'when_push'라는 workflow가 실행되는 때
-# 결국 이 workflow의 트리거는 깃에 push되는 때임
 on: push
 
-# job은 여러개의 step으로 이루어져있고, 가상의 환경에서 실행됨
 jobs:
-  test:
-    # 해당 'job'의 이름을 설정한다.
-    name: Test lint, tsc, build
-    # 어떤 가상환경에서 실행될 것인가? (우분투 최신버전에서 실행)
+  build:
+    name: CD
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: FE
 
-    # job은 여러 개의 step을 가지고 잇음
-    # step은 shell script를 싱행할 수 있고 만들거나 만들어진 action을 사용할 수 있다.
+    strategy:
+      matrix:
+        node-version: [ 14.x ]
+
     steps:
-      # 리눅스 환경에서 checkout하고 실행함
-      # use 는 만들어져있는 action을 실행할 때, 사용하는 태그임
-      - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
 
-      # Node.js 환경에서 실행할 것을 명시한다.
-      - name: Use Node.js
-        uses: actions/setup-node@v2
-       # 'with'명령을 통해서 Action에 변수 전달이 가능하다.
-       # '${{secrets.변수명}}'
-        with:
-          # git에서 설정했던 환경변수 ( node 의 버전을 나타냄 )
-            node-version: ${{secrets.NODE-VERSION}}
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
 
-      - name: Cache node modules
-        uses: actions/cache@v2
-       # 해당 step을 대표하는 id를 설정할 수 있음
-        id: cache
-        with:
-       # node_modules라는 폴더를 검사
-          path: node_modules
-      # 키값으로 cache가 돼있는지 확인합니다.
-          key: npm-packages-${{ hashFiles('**/package-lock.json') }}
+    - name: npm 설치
+      run: npm install
 
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm install
+    - name: npm 빌드
+      run: unset CI && npm run build
 
-      # lint, tsc, build를 테스트 하는 로직임
-      # 'run'은 command 명령어를 입력할 수 있게 해준다.
-      # - run: npm run lint
-      #   if: ${{ always() }}
-      # - run: npm run tsc
-      #   if: ${{ always() }}
-      - run: npm run build
-        if: ${{ always() }}
+    - name: zip 생성
+      run: zip -qq -r ./build-fe.zip
+      shell: bash
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+
+    - name: Upload to S3
+      run: aws deploy push --application-name testapp --description "This is a revision for the application" --s3-location s3://wooactiontest/build-fe.zip --source
+
+    - name: Code Deploy
+      run: aws deploy create-deployment --application-name test-fe --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name test --s3-location bucket=wooactiontest,bundleType=zip,key=build-fe.zip
+
