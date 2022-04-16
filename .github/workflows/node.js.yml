@@ -32,8 +32,11 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
 
+    # - name: Upload to S3
+    #   run: aws deploy push --application-name testapp --description "This is a revision for the application" --s3-location s3://wooactiontest/fe.zip --source
+
     - name: Upload to S3
-      run: aws deploy push --application-name testapp --description "This is a revision for the application" --s3-location s3://wooactiontest/build-fe.zip --source
+      run: aws s3 cp --region ap-northeast-2 ./build-fe.zip s3://wooactiontest/build-fe.zip
 
     - name: Code Deploy
       run: aws deploy create-deployment --application-name test-fe --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name test --s3-location bucket=wooactiontest,bundleType=zip,key=build-fe.zip
