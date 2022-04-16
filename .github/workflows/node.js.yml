@@ -11,10 +11,6 @@ jobs:
         shell: bash
         working-directory: FE
 
-    strategy:
-      matrix:
-        node-version: [ 14.x ]
-
     steps:
     - name: Checkout
       uses: actions/checkout@v2
