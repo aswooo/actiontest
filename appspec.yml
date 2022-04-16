@@ -3,16 +3,16 @@ os: linux
 
 files:
   - source: /
-    destination: /home/ubuntu/deploy-fe
+    destination: /home/ubuntu/deploy
 
 permissions:
-  - object: /home/ubuntu/deploy-fe
+  - object: /home/ubuntu/deploy
     owner: ubuntu
     group: ubuntu
     mode: 755
 
 hooks:
   AfterInstall:
-    - location: deploy-fe.sh
+    - location: deploy.sh
       timeout: 60
       runas: root
