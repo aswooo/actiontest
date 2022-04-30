@@ -1,47 +1,55 @@
-name: Node.js CD
+on:
+  push:
+    branches:
+      - main
 
-on: push
+name: Deploy to Amazon ECS
 
 jobs:
-  build:
-    name: CD
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v1
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: npm 설치
-      run: npm install
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-    - name: npm 빌드
-      run: unset CI && npm run build
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: container
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      # - name: Download task definition
+      #   run: |
+      #     aws ecs describe-task-definition --task-definition task-definition-so-woo-ju --query taskDefinition > task-definition.json
+      # - name: Fill in the new image ID in the Amazon ECS task definition
+      #   id: task-def
+      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
+      #   with:
+      #     task-definition: task-definition.json
+      #     container-name: container-so-woo-ju
+      #     image: ${{ steps.build-image.outputs.image }}
 
-    - name: zip 생성
-      run: zip -qq -r ./build-fe.zip .
-      shell: bash
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-2
-
-    # - name: Upload to S3
-    #   run: aws deploy push --application-name testapp --description "This is a revision for the application" --s3-location s3://wooactiontest/fe.zip --source
-
-    - name: Upload to S3
-      run: aws s3 cp --region ap-northeast-2 ./build-fe.zip s3://wooactiontest/build-fe.zip
-
-    - name: Code Deploy
-      run: aws deploy create-deployment --application-name testapp --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name test --s3-location bucket=wooactiontest,bundleType=zip,key=build-fe.zip
-
+      # - name: Deploy Amazon ECS task definition
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      #   with:
+      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
+      #     service: service-so-woo-ju
+      #     cluster: cluster-so-woo-ju
+      #     wait-for-service-stability: true
