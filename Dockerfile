@@ -1,20 +1,14 @@
-#base image
-#docker hub에서 image를 pull (node version 17에 issue)
-FROM node:16.13.0-alpine
+#java 11 사용
+FROM openjdk:11-jdk
 
-# set working directory
-#작업을 수행할 디렉토리를 지정
+#기본 작업 디렉토리 설정
 WORKDIR /app
 
-#현재 경로에 있는 것을 app으로 복사
-COPY . /app
+#jar파일 생성 후 복사
+ADD build/libs/project-0.0.1-SNAPSHOT.jar /app/app.jar
 
-# 이미지가 빌드 될때 실행
-RUN npm install
+#컨테이너가 실행될 때 명령어 수행
+ENTRYPOINT ["java","-jar","/app/app.jar"]
 
-
-#
-#https://iagreebut.tistory.com/153?category=777928
-#https://leonkong.cc/posts/dockerizing-react-app.html
-#https://github.com/litsynp/docker-example
-#https://gitlab.com/yalco/practice-docker
+# 1. backend 폴더에서 ./gradlew build 실행
+# 2. build/libs에 backend-0.0.1-SNAPSHOT.jar 생성 확인Í
