@@ -31,15 +31,15 @@ jobs:
         run: chmod +x ./gradlew
         shell: bash
 
-      - name: Build with Gradle
-        run: ./gradlew clean build
-        shell: bash
-      
       - name: Create Application Property
         env:
             SECRET_PROPERTIES: ${{ secrets.SECRET_PROPERTIES }}
         run: |
           echo "SECRET_PROPERTIES" > ./src/main/resources/application-secret.properties
+
+      - name: Build with Gradle
+        run: ./gradlew clean build
+        shell: bash
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
