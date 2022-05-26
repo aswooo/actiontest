@@ -1,8 +1,6 @@
 name: Deploy Backend to Amazon ECS
 on:
-  push:
-    branches:
-      - 'develop'
+  push
 
 jobs:
   deploy:
